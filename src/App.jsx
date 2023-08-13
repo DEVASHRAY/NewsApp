@@ -4,17 +4,18 @@ import fetchAllNews from './api/allNews';
 import Toast from 'react-native-toast-message';
 import SplashScreen from 'react-native-splash-screen';
 import AppContent from './AppContent';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 
-function App(): JSX.Element {
+function App() {
   useEffect(() => {
     SplashScreen.show();
   }, []);
 
   return (
-    <>
+    <GestureHandlerRootView style={{flex: 1, backgroundColor: '#FFF'}}>
       <AppContent />
-      <Toast />
-    </>
+      <Toast position="bottom" bottomOffset={20} />
+    </GestureHandlerRootView>
   );
 }
 

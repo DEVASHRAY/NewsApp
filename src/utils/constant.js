@@ -6,5 +6,5 @@ export const BASE_URL = {
 // Keys
 
 export const API_KEYS = {
-  NEWS_API_KEY: '67c99dcb6bd7441cbc65885f0c8b2579',
+  NEWS_API_KEY: 'a033f12dabc6473ab733474f50734ccb',
 };

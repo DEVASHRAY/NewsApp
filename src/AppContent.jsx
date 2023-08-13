@@ -3,38 +3,52 @@ import React, {useEffect} from 'react';
 import SplashScreen from 'react-native-splash-screen';
 import fetchAllNews from './api/allNews';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useNewsStore} from './zustand/useNewsStore';
+import News from './ui/news';
+import {storeNewsLocally} from './helpers/localNewsStorage';
+import {errorToast} from './helpers/toast';
 
 export default function AppContent() {
+  const updateNewsData = useNewsStore(({updateNewsData}) => updateNewsData);
+
   useEffect(() => {
-    getNews();
+    getRemoteNews();
   }, []);
 
-  const getData = async () => {
+  const getDataLocally = async () => {
     try {
       const value = await AsyncStorage.getItem('newsData');
       if (value !== null) {
-        console.log('newsData', value);
+        let data = JSON.parse(value || []);
+        updateNewsData(data || []);
+      } else {
+        errorToast({
+          toastTitle: 'Unable to fetch News at the moment.',
+          toastDescription: 'Please try again after sometime',
+        });
       }
     } catch (e) {
       // error reading value
+      console.log('ASYNC STORAGE ERROR', err);
+      errorToast({
+        toastTitle: 'Unable to fetch News at the moment.',
+        toastDescription: 'Please try again after sometime',
+      });
     }
   };
 
-  async function getNews() {
+  async function getRemoteNews() {
     try {
-      let data = await fetchAllNews();
-      AsyncStorage.setItem('newsData', JSON.stringify(data?.articles || ''));
+      let {articles = []} = await fetchAllNews({page: 1});
+      storeNewsLocally(articles);
+      updateNewsData(articles || []);
     } catch (err) {
-      getData();
+      getDataLocally();
       console.log(err);
     } finally {
       SplashScreen.hide();
     }
   }
 
-  return (
-    <View>
-      <Text>AppContent</Text>
-    </View>
-  );
+  return <News />;
 }
