@@ -14,26 +14,32 @@ import {
   storeNewsLocally,
 } from '../helpers/localNewsStorage';
 import fetchAllNews from '../api/allNews';
-import {useNewsStore} from '../zustand/useNewsStore';
+import { useNewsStore } from '../zustand/useNewsStore';
 import generateUniqueIndex from '../helpers/pickRandomNews';
-import {errorToast, infoToast, successToast} from '../helpers/toast';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import { errorToast, infoToast, successToast } from '../helpers/toast';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import NewsCard from './newsCard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const ADD_ITEM_COUNT = 10;
 
 export default function News() {
-  const newsData = useNewsStore(({newsData}) => newsData);
-  const pinnedNewsData = useNewsStore(({pinnedNewsData}) => pinnedNewsData);
 
-  const updateNewsData = useNewsStore(({updateNewsData}) => updateNewsData);
+  const edges = useSafeAreaInsets();
+
+
+  const newsData = useNewsStore(({ newsData }) => newsData);
+  const pinnedNewsData = useNewsStore(({ pinnedNewsData }) => pinnedNewsData);
+
+  const updateNewsData = useNewsStore(({ updateNewsData }) => updateNewsData);
   const updatedPinnedNewsData = useNewsStore(
-    ({updatedPinnedNewsData}) => updatedPinnedNewsData,
+    ({ updatedPinnedNewsData }) => updatedPinnedNewsData,
   );
 
   const [newsList, setNewsList] = useState([]);
   const [pageNo, setPageNo] = useState(2);
   const [fetchMoreNews, setFetchMoreNews] = useState(true);
+  const [disableWebView , setDisableWebView] = useState(false)
 
   // Add first 10 items in the news list array to be rendered on load
   useEffect(() => {
@@ -70,12 +76,12 @@ export default function News() {
   // function to fetch next batch of news
   async function getNews() {
     try {
-      let {articles = []} = await fetchAllNews({
+      let { articles = [] } = await fetchAllNews({
         page: pageNo,
       });
       if (articles.length > 0) {
         setPageNo(prev => prev + 1);
-        successToast({toastTitle: 'News Updated'});
+        successToast({ toastTitle: 'News Updated' });
         removeLocallyStoredNews();
         storeNewsLocally(articles || []);
         updateNewsData(articles || []);
@@ -90,14 +96,14 @@ export default function News() {
     }
   }
 
-  const rightSwipe = ({item, isPinnedNews, index, swipableRef}) => {
+  const rightSwipe = ({ item, isPinnedNews, index, swipableRef }) => {
     return (
       <Animated.View style={[styles.swipeOptionView]}>
         <TouchableOpacity
           style={[styles.optionView, styles.pin]}
           onPress={() => {
+            setDisableWebView(true)
             swipableRef?.current?.close();
-
             setTimeout(() => {
               if (isPinnedNews) {
                 if (pinnedNewsData.length === 1) {
@@ -120,8 +126,9 @@ export default function News() {
                   toastTitle: 'Only 2 pins available.',
                 });
               } else {
-                updatedPinnedNewsData([...pinnedNewsData, {...item}] || {});
+                updatedPinnedNewsData([...pinnedNewsData, { ...item }] || {});
               }
+              setDisableWebView(false)
             }, 100);
           }}>
           <Image
@@ -139,11 +146,13 @@ export default function News() {
           <TouchableOpacity
             style={[styles.optionView, styles.delete]}
             onPress={() => {
+              setDisableWebView(true)
               swipableRef?.current?.close();
               setTimeout(() => {
                 const newsDataCopy = [...newsData];
                 newsDataCopy?.splice(index, 1);
                 updateNewsData([...newsDataCopy]);
+                setDisableWebView(false)
               }, 100);
             }}>
             <Image
@@ -158,8 +167,9 @@ export default function News() {
   };
 
   const renderItem = useCallback(
-    ({index, item, isPinnedNews = false}) => {
+    ({ index, item, isPinnedNews = false }) => {
       if (!item) return <></>;
+     
 
       return (
         <NewsCard
@@ -167,10 +177,11 @@ export default function News() {
           rightSwipe={rightSwipe}
           isPinnedNews={isPinnedNews}
           index={index}
+          disableWebView = {disableWebView}
         />
       );
     },
-    [newsList, pinnedNewsData, newsData],
+    [newsList, pinnedNewsData, newsData , disableWebView],
   );
 
   const keyExtractor = useCallback(
@@ -200,12 +211,11 @@ export default function News() {
   };
 
   const listFooterComponent = useCallback(() => {
-    return <ActivityIndicator size={'large'} style={{marginBottom: 12}} />;
+    return <ActivityIndicator size={'large'} style={{ marginBottom: 12 }} />;
   }, []);
 
   return (
     <SafeAreaView style={[styles.container]}>
-      <Text style={[styles.headerText]}>Latest News</Text>
 
       {pinnedNewsData?.map((item, index) => (
         <View key={item?.description + Math.random() * 234}>
@@ -224,7 +234,7 @@ export default function News() {
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         onEndReached={onEndReached}
-        ListFooterComponent={listFooterComponent}
+        // ListFooterComponent={listFooterComponent}
         onEndReachedThreshold={0.8}
         maintainVisibleContentPosition={{
           minIndexForVisible: 0,
@@ -238,6 +248,8 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
     flex: 1,
+    backgroundColor : '#E4E4E4',
+    paddingTop : 80
   },
   swipeOptionView: {
     width: 88,

@@ -1,5 +1,5 @@
 import {View, Text} from 'react-native';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import SplashScreen from 'react-native-splash-screen';
 import fetchAllNews from './api/allNews';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -7,9 +7,12 @@ import {useNewsStore} from './zustand/useNewsStore';
 import News from './ui/news';
 import {storeNewsLocally} from './helpers/localNewsStorage';
 import {errorToast} from './helpers/toast';
+import AppNavigation from './navigation/app-navigation';
 
 export default function AppContent() {
   const updateNewsData = useNewsStore(({updateNewsData}) => updateNewsData);
+
+  const [loadSplashScreen, setLoadSplashScreen] = useState(true);
 
   useEffect(() => {
     getRemoteNews();
@@ -50,5 +53,5 @@ export default function AppContent() {
     }
   }
 
-  return <News />;
+  return <AppNavigation loadSplashScreen={loadSplashScreen} />;
 }
